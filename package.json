@@ -1,6 +1,6 @@
 {
-  "name": "ANDRUAVAUTH",
-  "version": "3.1.1",
+  "name": "DE_AUTH",
+  "version": "3.1.2",
   "author": {
     "name": "Mohammad Said Hefny",
     "email": "mohammad.hefny@gmail.com"
@@ -10,8 +10,8 @@
     "pixhawk",
     "drone"
   ],
-  "description": "Andruav Authentication Server",
-  "main": "andruav_auth.js",
+  "description": "DroneEngage Authentication Server",
+  "main": "server.js",
   "scripts": {
     "start": "node ./server.js"
   },
