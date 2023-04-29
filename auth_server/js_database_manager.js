@@ -15,57 +15,65 @@ function fn_initialize()
 {
     const fs = require('fs');
 
-    if ((m_serverconfig.m_configuration.hasOwnProperty('use_single_account_mode') === true)
-    && (m_serverconfig.m_configuration.use_single_account_mode === true)) {
+    if (m_serverconfig.m_configuration.account_storage_type.toLowerCase() === 'single') {
         return ;
     } 
 
-    if (m_serverconfig.m_configuration.hasOwnProperty('db_users') === true) {
-        // users database
-        global.db_users = new v_users.db_user(global.m_serverconfig.m_configuration.db_users);
-        console.log ("Users Database File  " + global.Colors.BSuccess + global.m_serverconfig.m_configuration.db_users + global.Colors.Reset);
-        if (!fs.existsSync(global.m_serverconfig.m_configuration.db_users)) { 
-            console.log (global.Colors.Error +  "File Not Found"  + global.Colors.Reset);
+    if (m_serverconfig.m_configuration.account_storage_type.toLowerCase() === 'file') {
+        if (m_serverconfig.m_configuration.hasOwnProperty('db_users') === true) {
+            // users database
+            global.db_users = new v_users.db_user(global.m_serverconfig.m_configuration.db_users);
+            console.log ("Users Database File  " + global.Colors.BSuccess + global.m_serverconfig.m_configuration.db_users + global.Colors.Reset);
+            if (!fs.existsSync(global.m_serverconfig.m_configuration.db_users)) { 
+                console.log (global.Colors.Error +  "File Not Found"  + global.Colors.Reset);
+            }
+            return;
         }
-        return;
     }
 
+    if (m_serverconfig.m_configuration.account_storage_type.toLowerCase() === 'db') {
     
-    try
-    {
-        const c_mysql = require('mysql2');
-        m_dbPool = c_mysql.createPool(
-            {
-                connectTimeout: 10000, // 3s
-                connectionLimit: 18, //important
-                queueLimit: 19,
-                host: m_serverconfig.m_configuration.dbIP,
-                user: m_serverconfig.m_configuration.dbuser,
-                password: m_serverconfig.m_configuration.dbpassword,
-                database: m_serverconfig.m_configuration.dbdatabase,
-                debug: false
-            });
-
-            m_dbPool.getConnection( function (p_err,p_dbConnection)
-            {
-                if (p_err!= null)
+        try
+        {
+            const c_mysql = require('mysql2');
+            m_dbPool = c_mysql.createPool(
                 {
-                    console.log ("[FATAL] database error.");
-                    console.log (JSON.stringify(p_err));
-                    process.exit(1);
-                    //return ; //
-                }
+                    connectTimeout: 10000, // 3s
+                    connectionLimit: 18, //important
+                    queueLimit: 19,
+                    host: m_serverconfig.m_configuration.dbIP,
+                    user: m_serverconfig.m_configuration.dbuser,
+                    password: m_serverconfig.m_configuration.dbpassword,
+                    database: m_serverconfig.m_configuration.dbdatabase,
+                    debug: false
+                });
 
-                console.log (global.Colors.Success + "[OK] Database is Connected." + global.Colors.Reset);
-                p_dbConnection.release();
-            });
+                m_dbPool.getConnection( function (p_err,p_dbConnection)
+                {
+                    if (p_err!= null)
+                    {
+                        console.log ("[FATAL] database error.");
+                        console.log (JSON.stringify(p_err));
+                        process.exit(1);
+                        //return ; //
+                    }
+
+                    console.log (global.Colors.Success + "[OK] Database is Connected." + global.Colors.Reset);
+                    p_dbConnection.release();
+                });
+        }
+        catch (ex)
+        {
+            console.log ("[FATAL] database error.");
+            console.log (JSON.stringify(ex));
+            process.exit(1);
+        }
+        
+        return ;
     }
-    catch (ex)
-    {
-        console.log ("[FATAL] database error.");
-        console.log (JSON.stringify(ex));
-        process.exit(1);
-    }
+
+    console.log (global.Colors.BError + "FATAL ERROR:" + global.Colors.FgYellow + " account_storage_type or db_users or db connection" +  global.Colors.Reset + " are not specified in config file. ");
+    process.exit(0);
 }
 
 /**
@@ -125,7 +133,12 @@ function fn_do_loginAccount (p_accountName, p_accessCode, fn_callback)
             {
                 c_reply.m_data = {};
                 c_reply.m_data.m_sid = rows[0]['Account_SID'];
-                c_reply.m_data.m_permission = rows[0]['Permission'];
+                c_reply.m_data.m_permission = 'D1G1T3R4V5C6';
+                c_reply.m_data.m_prm = rows[0]['Permission'];
+                if (c_reply.m_data.m_prm == 'D1G1T3R4V5C6')
+                { // backward compatibility to be deleted in the next version.
+                    c_reply.m_data.m_prm ='0xffffffff'; 
+                }
                 c_reply.m_data.m_enabled = rows[0]['Enabled'];
                 c_reply.m_data.m_instance_limit = rows[0]['Instance_Limit'];
                 if (c_reply.m_data.m_enabled==0)
